@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "style": {
+      "description": "The visual style and base primitive library used when generating components (e.g. \"base-vega\" = Base UI primitives with the Vega style).",
+      "type": "string",
+      "enum": [
+        "default",
+        "new-york",
+        "radix-vega",
+        "radix-nova",
+        "radix-maia",
+        "radix-lyra",
+        "radix-mira",
+        "radix-luma",
+        "radix-sera",
+        "radix-rhea",
+        "base-vega",
+        "base-nova",
+        "base-maia",
+        "base-lyra",
+        "base-mira",
+        "base-luma",
+        "base-sera",
+        "base-rhea",
+        "aria-vega",
+        "aria-nova",
+        "aria-maia",
+        "aria-lyra",
+        "aria-mira",
+        "aria-luma",
+        "aria-sera",
+        "aria-rhea"
+      ]
+    },
+    "tailwind": {
+      "description": "Tailwind CSS configuration used when generating and styling components.",
+      "type": "object",
+      "properties": {
+        "config": {
+          "description": "Path to the Tailwind config file, relative to the project root. Leave empty for Tailwind v4 projects, which configure Tailwind in CSS instead of a JS/TS config file.",
+          "type": "string"
+        },
+        "css": {
+          "description": "Path to the global CSS file where Tailwind directives and CSS variables are defined, relative to the project root.",
+          "type": "string"
+        },
+        "baseColor": {
+          "description": "The base color palette used to generate the default theme's CSS variables (e.g. \"slate\", \"zinc\", \"neutral\").",
+          "type": "string"
+        },
+        "cssVariables": {
+          "description": "Whether to theme components using CSS variables (true) or static Tailwind utility classes (false).",
+          "type": "boolean"
+        },
+        "prefix": {
+          "description": "Prefix to prepend to all generated Tailwind utility classes, useful for avoiding collisions with existing styles.",
+          "type": "string"
+        }
+      },
+      "required": ["config", "css", "baseColor", "cssVariables"]
+    },
+    "rsc": {
+      "description": "Whether the project supports React Server Components. When true, generated components that need interactivity include a \"use client\" directive.",
+      "type": "boolean"
+    },
+    "tsx": {
+      "description": "Whether to generate components as TypeScript (.tsx) files. When false, components are generated as plain JavaScript (.jsx).",
+      "type": "boolean"
+    },
+    "iconLibrary": {
+      "description": "The icon library used by generated components (e.g. \"lucide\", \"tabler\", \"radix\").",
+      "type": "string"
+    },
+    "aliases": {
+      "description": "Import path aliases used when generating and importing components, matching the paths configured in tsconfig.json/jsconfig.json.",
+      "type": "object",
+      "properties": {
+        "utils": {
+          "description": "Import alias for shared utility functions (e.g. the \"cn\" class-name helper).",
+          "type": "string"
+        },
+        "components": {
+          "description": "Import alias for the components directory.",
+          "type": "string"
+        },
+        "ui": {
+          "description": "Import alias for the directory where UI primitives (button, dialog, etc.) are installed.",
+          "type": "string"
+        },
+        "lib": {
+          "description": "Import alias for the shared library/helpers directory.",
+          "type": "string"
+        },
+        "hooks": {
+          "description": "Import alias for the custom React hooks directory.",
+          "type": "string"
+        }
+      },
+      "required": ["utils", "components"]
+    },
+    "menuColor": {
+      "description": "Color treatment for menu-like surfaces (dropdown menu, context menu, command menu, etc.).",
+      "type": "string",
+      "enum": [
+        "default",
+        "inverted",
+        "default-translucent",
+        "inverted-translucent"
+      ]
+    },
+    "menuAccent": {
+      "description": "Accent style used to highlight selected/active items within menu-like components.",
+      "type": "string",
+      "enum": ["subtle", "bold"]
+    },
+    "rtl": {
+      "description": "Whether generated components should support right-to-left text direction.",
+      "type": "boolean"
+    },
+    "registries": {
+      "description": "Custom component registries, keyed by an \"@\"-prefixed namespace (e.g. \"@acme\"), used with `shadcn add @acme/button`.",
+      "type": "object",
+      "patternProperties": {
+        "^@": {
+          "oneOf": [
+            {
+              "description": "A URL template for this registry containing a \"{name}\" placeholder for the requested item.",
+              "type": "string",
+              "pattern": "\\{name\\}"
+            },
+            {
+              "type": "object",
+              "description": "A registry definition with a URL template plus optional query params and request headers (e.g. for auth tokens).",
+              "properties": {
+                "url": {
+                  "description": "A URL template for this registry containing a \"{name}\" placeholder for the requested item.",
+                  "type": "string",
+                  "pattern": "\\{name\\}"
+                },
+                "params": {
+                  "description": "Additional query string parameters to send with each request to this registry.",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "headers": {
+                  "description": "Additional HTTP headers to send with each request to this registry (e.g. \"Authorization\").",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["url"]
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["style", "tailwind", "rsc", "aliases"]
+}
