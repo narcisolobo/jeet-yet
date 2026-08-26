@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  createUserWithEmailAndPassword,
   getAdditionalUserInfo,
   onAuthStateChanged,
   signInWithPopup,
@@ -65,6 +66,23 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function signUpWithEmail(email: string, password: string) {
+    const { user } = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
+    const { uid, email: userEmail, displayName, photoURL } = user;
+    await setDoc(doc(db, "profiles", uid), {
+      uid,
+      email: userEmail,
+      displayName,
+      photoURL,
+      handle: null,
+      createdAt: serverTimestamp(),
+    });
+  }
+
   async function signOutUser() {
     try {
       await signOut(auth);
@@ -89,6 +107,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         profileLoading,
         signInWithGoogle,
+        signUpWithEmail,
         signOutUser,
         claimHandle,
       }}
