@@ -43,7 +43,12 @@ test("creates a profiles/{uid} doc for a brand-new Google sign-in", async ({
   await inputs.nth(1).fill(displayName);
   await popup.getByRole("button", { name: "Sign in with Google.com" }).click();
 
-  await expect(page.getByText(displayName)).toBeVisible({ timeout: 15000 });
+  // A brand-new user has no handle yet, so /auth/sign-in redirects to
+  // /onboarding once signed in, which shows the handle-picker dialog.
+  await expect(page).toHaveURL(/\/onboarding/, { timeout: 15000 });
+  await expect(
+    page.getByRole("heading", { name: "Choose your public handle" }),
+  ).toBeVisible();
 
   // The Firestore write happens inside signInWithGoogle, independently of
   // the onAuthStateChanged listener that updates the UI above, so poll

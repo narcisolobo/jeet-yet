@@ -7,14 +7,15 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { useEffect, useState, type ReactNode } from "react";
 import { auth, db, googleProvider } from "@/lib/firebase";
-import { AuthContext } from "@/context/auth-context";
+import { AuthContext, type Profile } from "@/context/auth-context";
 
 function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileDoc, setProfileDoc] = useState<Profile | null>(null);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
@@ -22,6 +23,18 @@ function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    return onSnapshot(doc(db, "profiles", user.uid), (snapshot) => {
+      setProfileDoc(snapshot.exists() ? (snapshot.data() as Profile) : null);
+    });
+  }, [user]);
+
+  // Guards against briefly showing a previous user's profile after sign-out
+  // followed by a different account signing in, before the new snapshot fires.
+  const profile = profileDoc?.uid === user?.uid ? profileDoc : null;
+  const profileLoading = Boolean(user) && profileDoc?.uid !== user?.uid;
 
   async function signInWithGoogle() {
     try {
@@ -60,7 +73,16 @@ function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext value={{ user, loading, signInWithGoogle, signOutUser }}>
+    <AuthContext
+      value={{
+        user,
+        loading,
+        profile,
+        profileLoading,
+        signInWithGoogle,
+        signOutUser,
+      }}
+    >
       {children}
     </AuthContext>
   );
