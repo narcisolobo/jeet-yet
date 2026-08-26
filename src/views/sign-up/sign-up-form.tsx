@@ -2,13 +2,7 @@
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   InputGroup,
@@ -17,12 +11,11 @@ import {
 } from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
-import { UserCircle, Mail, Lock } from "lucide-react";
-import Image from "next/image";
+import { Mail, Lock } from "lucide-react";
 import { Fragment } from "react";
 
 function SignUpForm() {
-  const { user, loading, signInWithGoogle, signOutUser } = useAuth();
+  const { user, loading, signInWithGoogle } = useAuth();
 
   return (
     <Card className="min-w-[360]">
@@ -31,25 +24,11 @@ function SignUpForm() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p className="text-muted-foreground text-sm">Loading...</p>
+          <p className="text-muted-foreground text-sm">Signing up...</p>
         ) : user ? (
-          <div className="flex items-center gap-3">
-            {user.photoURL ? (
-              <Image
-                src={user.photoURL}
-                alt={user.displayName ?? "user avatar"}
-                width={32}
-                height={32}
-                className="size-8 rounded-full"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <UserCircle className="text-muted-foreground size-8" />
-            )}
-            <p className="text-sm font-medium">
-              {user.displayName ?? user.email}
-            </p>
-          </div>
+          <p className="text-muted-foreground text-sm">
+            Sign up successful! Redirecting...
+          </p>
         ) : (
           <Fragment>
             <form className="space-y-2">
@@ -121,13 +100,6 @@ function SignUpForm() {
           </Fragment>
         )}
       </CardContent>
-      <CardFooter>
-        {user ? (
-          <Button variant="outline" onClick={signOutUser}>
-            Sign out
-          </Button>
-        ) : null}
-      </CardFooter>
     </Card>
   );
 }
