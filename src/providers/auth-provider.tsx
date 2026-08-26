@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   type User,
@@ -83,6 +84,10 @@ function AuthProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  async function signInWithEmail(email: string, password: string) {
+    await signInWithEmailAndPassword(auth, email, password);
+  }
+
   async function signOutUser() {
     try {
       await signOut(auth);
@@ -108,6 +113,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
         profileLoading,
         signInWithGoogle,
         signUpWithEmail,
+        signInWithEmail,
         signOutUser,
         claimHandle,
       }}
