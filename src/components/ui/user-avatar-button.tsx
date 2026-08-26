@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +12,18 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "firebase/auth";
 import { UserCircle } from "lucide-react";
+import Link from "next/link";
 
 function getInitials(user: User): string {
   const source = user.displayName ?? user.email ?? "";
   return source.slice(0, 2).toUpperCase();
 }
+
+const navItems = [
+  { href: "/recipes", label: "Community Recipes" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/profile", label: "Profile" },
+];
 
 function UserAvatarButton() {
   const { user, loading, signOutUser } = useAuth();
@@ -40,22 +46,18 @@ function UserAvatarButton() {
             <AvatarFallback>{getInitials(user)}</AvatarFallback>
           </Avatar>
         ) : (
-          <UserCircle />
+          <UserCircle className="size-8" />
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         className="w-auto min-w-56 whitespace-nowrap"
       >
-        <DropdownMenuItem render={<Link href="/recipes" />}>
-          Community Recipes
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/dashboard" />}>
-          Dashboard
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/profile" />}>
-          Profile
-        </DropdownMenuItem>
+        {navItems.map(({ href, label }) => (
+          <DropdownMenuItem key={href} render={<Link href={href} />}>
+            {label}
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOutUser}>Sign Out</DropdownMenuItem>
       </DropdownMenuContent>
