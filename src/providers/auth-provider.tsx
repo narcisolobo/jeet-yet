@@ -1,13 +1,15 @@
 "use client";
 
 import {
+  getAdditionalUserInfo,
   onAuthStateChanged,
   signInWithPopup,
   signOut,
   type User,
 } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useEffect, useState, type ReactNode } from "react";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, db, googleProvider } from "@/lib/firebase";
 import { AuthContext } from "@/context/auth-context";
 
 function AuthProvider({ children }: { children: ReactNode }) {
@@ -23,7 +25,19 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle() {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+
+      if (getAdditionalUserInfo(result)?.isNewUser) {
+        const { uid, email, displayName, photoURL } = result.user;
+        await setDoc(doc(db, "profiles", uid), {
+          uid,
+          email,
+          displayName,
+          photoURL,
+          handle: null,
+          createdAt: serverTimestamp(),
+        });
+      }
     } catch (error) {
       if (
         error &&

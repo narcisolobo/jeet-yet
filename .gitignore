@@ -54,3 +54,7 @@ node_modules/
 AGENTS.md
 CLAUDE.md
 skills-lock.json
+
+# Firebase
+firebase-debug.log
+firestore-debug.log
