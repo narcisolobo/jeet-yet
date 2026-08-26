@@ -53,20 +53,25 @@ public handle: `@suggested-handle`", editable before confirming.
 
 Uniqueness can't be enforced with a plain read-then-write — two users
 choosing the same handle at the same moment would race. Claim it through a
-callable Cloud Function, `claimHandle(handle)`, that runs a single Firestore
-transaction:
+callable Cloud Function, `claimHandle(handle)` (`functions/src/index.ts`),
+that runs a single Firestore transaction:
 
-1. Read `handles/{handle}`.
-2. If it exists → throw a `handle-taken` error back to the client (user edits
-   the suggestion and retries).
-3. If it doesn't → write `handles/{handle} = { uid }` and
+1. Reject up front if `handle` isn't 3-30 characters of lowercase letters,
+   digits, and single hyphens (no leading/trailing/doubled hyphens).
+2. Read `handles/{handle}` and `profiles/{uid}` together.
+3. If the profile doesn't exist → `failed-precondition` (defensive; shouldn't
+   happen in practice since Detect New User always creates it first).
+4. If `handles/{handle}` exists → throw `already-exists` back to the client
+   (seen there as `functions/already-exists`; the handle picker shows "That
+   handle is already taken — try another" and lets the user edit and retry).
+5. Otherwise → write `handles/{handle} = { uid }` and
    `profiles/{uid}.handle = handle` atomically.
 
 Doing the claim server-side (rather than trusting client Firestore rules for
-it) keeps the uniqueness transaction and any format/profanity validation in
-one auditable place. The initial `profiles/{uid}` creation above stays a
-plain client write since it only ever touches the caller's own doc and holds
-no contested/unique field.
+it) keeps the uniqueness transaction and format validation in one auditable
+place — there's no profanity check yet, just the format rule above. The
+initial `profiles/{uid}` creation above stays a plain client write since it
+only ever touches the caller's own doc and holds no contested/unique field.
 
 ## Redirect
 

@@ -11,7 +11,7 @@ const FIRESTORE_DOCS_URL =
 
 interface FirestoreDocument {
   fields: {
-    email: { stringValue: string };
+    email?: { stringValue: string };
     displayName?: { stringValue: string };
     handle?: { nullValue: null };
   };
@@ -37,7 +37,12 @@ test("creates a profiles/{uid} doc for a brand-new Google sign-in", async ({
     page.getByRole("button", { name: "Sign in with Google" }).click(),
   ]);
 
+  await popup.waitForLoadState("domcontentloaded");
   await popup.getByText("Add new account").click();
+  // The picker->form transition (especially once the Auth Emulator already
+  // has other accounts) can briefly leave the new-account inputs present
+  // but not yet visible/interactable; settle before filling.
+  await popup.waitForTimeout(500);
   const inputs = popup.locator("input");
   await inputs.nth(0).fill(email);
   await inputs.nth(1).fill(displayName);
@@ -59,7 +64,7 @@ test("creates a profiles/{uid} doc for a brand-new Google sign-in", async ({
     });
     const body: { documents?: FirestoreDocument[] } = await response.json();
     const doc = body.documents?.find(
-      (candidate) => candidate.fields.email.stringValue === email,
+      (candidate) => candidate.fields.email?.stringValue === email,
     );
 
     expect(doc).toBeTruthy();

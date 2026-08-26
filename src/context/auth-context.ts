@@ -16,6 +16,7 @@ interface AuthContextValue {
   profileLoading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
+  claimHandle: (handle: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);

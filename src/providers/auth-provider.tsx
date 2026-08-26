@@ -8,8 +8,9 @@ import {
   type User,
 } from "firebase/auth";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { useEffect, useState, type ReactNode } from "react";
-import { auth, db, googleProvider } from "@/lib/firebase";
+import { auth, db, functions, googleProvider } from "@/lib/firebase";
 import { AuthContext, type Profile } from "@/context/auth-context";
 
 function AuthProvider({ children }: { children: ReactNode }) {
@@ -72,6 +73,14 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function claimHandle(handle: string) {
+    const claim = httpsCallable<{ handle: string }, { handle: string }>(
+      functions,
+      "claimHandle",
+    );
+    await claim({ handle });
+  }
+
   return (
     <AuthContext
       value={{
@@ -81,6 +90,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
         profileLoading,
         signInWithGoogle,
         signOutUser,
+        claimHandle,
       }}
     >
       {children}

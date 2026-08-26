@@ -15,10 +15,33 @@ import { useAuth } from "@/hooks/use-auth";
 import { generateHandle } from "@/lib/utils";
 
 function HandlePicker() {
-  const { user } = useAuth();
+  const { user, claimHandle } = useAuth();
   const [handle, setHandle] = useState(() =>
     user ? generateHandle(user) : "",
   );
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConfirm() {
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await claimHandle(handle);
+    } catch (err) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "code" in err &&
+        err.code === "functions/already-exists"
+      ) {
+        setError("That handle is already taken — try another.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+      setSubmitting(false);
+    }
+  }
 
   return (
     <AlertDialog defaultOpen>
@@ -33,10 +56,18 @@ function HandlePicker() {
           value={handle}
           onChange={(event) => setHandle(event.target.value)}
           placeholder="your-handle"
+          disabled={submitting}
         />
+        {error ? (
+          <p className="text-destructive text-xs">{error}</p>
+        ) : null}
         <AlertDialogFooter>
-          {/* Placeholder until claimHandle (the next sign-up-flow piece) exists. */}
-          <AlertDialogAction disabled>Confirm</AlertDialogAction>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            disabled={submitting || !handle}
+          >
+            {submitting ? "Confirming..." : "Confirm"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

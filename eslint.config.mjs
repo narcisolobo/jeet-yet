@@ -32,7 +32,13 @@ const eslintConfig = defineConfig([
       "import/no-named-as-default-member": "off",
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "functions/lib/**",
+  ]),
 ]);
 
 export default eslintConfig;
