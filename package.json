@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test --project=chromium",
+    "emulators": "firebase emulators:start",
+    "functions:build": "npm --prefix functions run build",
+    "functions:build:watch": "npm --prefix functions run build:watch"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
