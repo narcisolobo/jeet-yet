@@ -10,7 +10,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { useAuth } from "@/hooks/use-auth";
 import { generateHandle } from "@/lib/utils";
 
@@ -29,13 +34,18 @@ function HandlePicker() {
     try {
       await claimHandle(handle);
     } catch (err) {
-      if (
-        err &&
-        typeof err === "object" &&
-        "code" in err &&
-        err.code === "functions/already-exists"
-      ) {
-        setError("That handle is already taken — try another.");
+      if (err && typeof err === "object" && "code" in err) {
+        if (err.code === "functions/already-exists") {
+          setError("That handle is already taken — try another.");
+        } else if (
+          err.code === "functions/internal" ||
+          err.code === "functions/unavailable" ||
+          err.code === "functions/deadline-exceeded"
+        ) {
+          setError("Couldn't connect. Please try again.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -52,12 +62,22 @@ function HandlePicker() {
             This is how other users will find you. You can change it later.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <Input
-          value={handle}
-          onChange={(event) => setHandle(event.target.value)}
-          placeholder="your-handle"
-          disabled={submitting}
-        />
+        <InputGroup>
+          <InputGroupAddon align="inline-start">
+            <InputGroupText>@</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput
+            value={handle}
+            onChange={(event) => setHandle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && handle && !submitting) {
+                handleConfirm();
+              }
+            }}
+            placeholder="your-handle"
+            disabled={submitting}
+          />
+        </InputGroup>
         {error ? (
           <p className="text-destructive text-xs">{error}</p>
         ) : null}
