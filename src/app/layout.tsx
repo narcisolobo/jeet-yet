@@ -26,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <Providers>
           <Header />
-          <main className="mt-12 flex flex-1 flex-col">{children}</main>
+          <main className="mt-16 flex flex-1 flex-col">{children}</main>
           <Footer />
         </Providers>
       </body>

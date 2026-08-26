@@ -21,13 +21,13 @@ import { UserCircle, Mail, Lock } from "lucide-react";
 import Image from "next/image";
 import { Fragment } from "react";
 
-function SignInForm() {
+function SignUpForm() {
   const { user, loading, signInWithGoogle, signOutUser } = useAuth();
 
   return (
     <Card className="min-w-[360]">
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+        <CardTitle>Sign Up</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -81,8 +81,29 @@ function SignInForm() {
                     <Lock className="text-muted-foreground" />
                   </InputGroupAddon>
                 </InputGroup>
+                <FieldDescription className="text-xs">
+                  12 characters, 1 lower, 1 upper, 1 number, 1 special.
+                </FieldDescription>
                 <FieldDescription className="text-destructive text-xs">
                   Specific password errors.
+                </FieldDescription>
+              </Field>
+              <Field className="max-w-sm">
+                <FieldLabel htmlFor="confirm-password">
+                  Confirm Password
+                </FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="confirm-password"
+                    name="confirm-password"
+                    placeholder="confirm password"
+                  />
+                  <InputGroupAddon align="inline-start">
+                    <Lock className="text-muted-foreground" />
+                  </InputGroupAddon>
+                </InputGroup>
+                <FieldDescription className="text-destructive text-xs">
+                  Passwords must match.
                 </FieldDescription>
               </Field>
             </form>
@@ -95,7 +116,7 @@ function SignInForm() {
             </div>
             <Button variant="outline" onClick={signInWithGoogle}>
               <GoogleIcon />
-              Sign in with Google
+              Sign up with Google
             </Button>
           </Fragment>
         )}
@@ -111,4 +132,4 @@ function SignInForm() {
   );
 }
 
-export default SignInForm;
+export default SignUpForm;
