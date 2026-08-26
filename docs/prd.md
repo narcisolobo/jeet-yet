@@ -4,7 +4,7 @@ _Companion doc: [technical-design.md](technical-design.md) covers the data model
 
 ## Overview
 
-A personal recipe app, starting as a single-user tool for me and later opening up to other users with their own independent collections, replacing existing apps that handle recipe import poorly. Building the front end with Next.js (React/TS), with a native iOS app (SwiftUI) as a later phase, synced across my own devices via a shared Firebase backend.
+A recipe app open to any user from the start, each with their own independent collection, replacing existing apps that handle recipe import poorly. Building the front end with Next.js (React/TS), with a native iOS app (SwiftUI) as a later phase, synced across devices via a shared Firebase backend. Social/community features (following, public discovery, comments) are deferred to Phase 7 — see Development Phases.
 
 ## Problem Statement
 
@@ -25,11 +25,16 @@ Existing recipe apps are bad at getting recipes _into_ the app — scraping is u
 
 ## User
 
-Just me, through the MVP and Phases 1–6 — no personas needed, which simplifies a lot of early decisions (no permissions model beyond a single owner, no conflict resolution beyond my own devices). Phase 7 opens the app to other users, each with their own independent collection — see Development Phases.
+Open to any user from Phase 1 onward — anyone can sign in (Google or email/password) and gets their own independent collection, identified by a public handle (see [collections.md](collections.md)). No conflict resolution beyond a single user's own devices, since collections aren't shared/co-edited (see Non-Goals). Phase 7 adds the social layer on top — following, public discovery, comments/ratings — see Development Phases.
 
 ## Features
 
 ### MVP
+
+**Account**
+
+- Sign in via Google or email/password — open to any account, not restricted to a single owner
+- Public profile with a claimed handle (`@handle`)
 
 **Import**
 
@@ -64,10 +69,9 @@ Just me, through the MVP and Phases 1–6 — no personas needed, which simplifi
 
 ### Community (Phase 7)
 
-- Open sign-in to any Google account (lifts the single-account restriction)
 - Per-recipe visibility toggle (public/private), default private
 - Public discovery/browsing of public recipes, including for logged-out visitors
-- User profiles, following other users
+- Following other users (profiles/handles already exist from Phase 1 — see [collections.md](collections.md))
 - Comments and ratings from other users (distinct from your own private favorites/thumbs-up)
 - Save another user's recipe to your own collection (a reference to the original, not a copy/fork)
 
@@ -80,7 +84,7 @@ Just me, through the MVP and Phases 1–6 — no personas needed, which simplifi
 ## Development Phases
 
 **Phase 1: Foundation (web)**
-Next.js project + Firebase setup (Firestore, Storage, Auth). Core `Recipe` data model. Manual entry only — no import yet. Basic list view + detail view + edit/delete. Goal: full create-save-view-edit loop working end to end, gated behind sign-in.
+Next.js project + Firebase setup (Firestore, Storage, Auth). Open sign-in (Google + email/password, any account) with `profiles`/`handles` collections backing a public username claim (see [collections.md](collections.md)). Core `Recipe` data model. Manual entry only — no import yet. Basic list view + detail view + edit/delete. Goal: full create-save-view-edit loop working end to end, gated behind sign-in.
 
 **Phase 2: Organization (web)**
 Categories, tags, search/filter, favorites, thumbs up/down. Categories/tags/favorites are UI + Firestore querying; search/filter is backed by Algolia (see [technical-design.md](technical-design.md)) — set up the Firebase-to-Algolia sync extension here.
@@ -97,8 +101,8 @@ Port the app to SwiftUI, reusing the Firebase backend and data model designed in
 **Phase 6: Post-MVP**
 Unit conversion, ingredient scaling, cook mode, cook history, shopping list generation, OCR photo import — built for whichever platform(s) make sense at that point. Ingredient records are already structured (see [technical-design.md](technical-design.md)), so conversion/scaling here is application logic on existing data, not a schema change.
 
-**Phase 7: Community (multi-user + social)**
-Opens sign-in to any Google account, builds on the `ownerId`/`visibility` fields and security rules already in place since Phase 1. Public discovery/browsing, user profiles, following, comments/ratings, save-to-my-collection. Substantial enough in scope (new data collections, moderation, discovery UI) to warrant its own phase rather than folding into Future/Backlog.
+**Phase 7: Community (social layer)**
+Builds on the `ownerId`/`visibility` fields and security rules already in place since Phase 1, plus the `profiles`/`handles` collections already backing sign-in since Phase 1. Adds the remaining social layer: public discovery/browsing, following, comments/ratings, save-to-my-collection. Substantial enough in scope (moderation, discovery UI, new `savedRecipes`/`comments`/`ratings` collections) to warrant its own phase rather than folding into Future/Backlog.
 
 Phases 2–4 are roughly independent — if one stalls (e.g. import scraping turns into a slog), it's possible to jump to another phase without blocking overall progress. Building the web app first also means the data model and Firebase schema get battle-tested before the iOS port, which should make Phase 5 faster than starting iOS from scratch.
 
