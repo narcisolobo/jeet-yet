@@ -58,3 +58,6 @@ skills-lock.json
 # Firebase
 firebase-debug.log
 firestore-debug.log
+
+# VS Code
+.vscode
