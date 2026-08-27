@@ -7,12 +7,12 @@ import { useAuth } from "@/hooks/use-auth";
 
 function SignUpPage() {
   const router = useRouter();
-  const { user, loading, profile, profileLoading } = useAuth();
+  const { user, loading, profile, profileLoading, sessionSyncing } = useAuth();
 
   useEffect(() => {
-    if (loading || profileLoading || !user) return;
+    if (loading || profileLoading || sessionSyncing || !user) return;
     router.replace(profile?.handle ? "/dashboard" : "/onboarding");
-  }, [loading, profileLoading, user, profile, router]);
+  }, [loading, profileLoading, sessionSyncing, user, profile, router]);
 
   return (
     <section className="flex flex-1 items-center">

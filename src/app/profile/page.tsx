@@ -17,6 +17,10 @@ function ProfilePage() {
     }
   }, [loading, profileLoading, user, profile, router]);
 
+  if (loading || profileLoading || !user || !profile?.handle) {
+    return null;
+  }
+
   return (
     <section className="flex flex-1 items-center">
       <div className="mx-auto max-w-7xl px-6">

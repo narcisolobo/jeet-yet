@@ -13,12 +13,14 @@ import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useEffect, useState, type ReactNode } from "react";
 import { auth, db, functions, googleProvider } from "@/lib/firebase";
+import { clearSessionCookie, syncSessionCookie } from "@/lib/firebase/session-client";
 import { AuthContext, type Profile } from "@/context/auth-context";
 
 function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileDoc, setProfileDoc] = useState<Profile | null>(null);
+  const [sessionSyncing, setSessionSyncing] = useState(false);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
@@ -42,6 +44,15 @@ function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+
+      setSessionSyncing(true);
+      try {
+        await syncSessionCookie(result.user);
+      } catch (error) {
+        console.error("Session sync failed:", error);
+      } finally {
+        setSessionSyncing(false);
+      }
 
       if (getAdditionalUserInfo(result)?.isNewUser) {
         const { uid, email, displayName, photoURL } = result.user;
@@ -73,6 +84,14 @@ function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     );
+    setSessionSyncing(true);
+    try {
+      await syncSessionCookie(user);
+    } catch (error) {
+      console.error("Session sync failed:", error);
+    } finally {
+      setSessionSyncing(false);
+    }
     const { uid, email: userEmail, displayName, photoURL } = user;
     await setDoc(doc(db, "profiles", uid), {
       uid,
@@ -85,7 +104,15 @@ function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithEmail(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    setSessionSyncing(true);
+    try {
+      await syncSessionCookie(user);
+    } catch (error) {
+      console.error("Session sync failed:", error);
+    } finally {
+      setSessionSyncing(false);
+    }
   }
 
   async function signOutUser() {
@@ -93,6 +120,12 @@ function AuthProvider({ children }: { children: ReactNode }) {
       await signOut(auth);
     } catch (error) {
       console.error("Sign out failed:", error);
+    } finally {
+      try {
+        await clearSessionCookie();
+      } catch (error) {
+        console.error("Session clear failed:", error);
+      }
     }
   }
 
@@ -111,6 +144,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         profile,
         profileLoading,
+        sessionSyncing,
         signInWithGoogle,
         signUpWithEmail,
         signInWithEmail,

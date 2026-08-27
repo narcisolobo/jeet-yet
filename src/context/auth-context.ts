@@ -14,6 +14,7 @@ interface AuthContextValue {
   loading: boolean;
   profile: Profile | null;
   profileLoading: boolean;
+  sessionSyncing: boolean;
   signInWithGoogle: () => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
