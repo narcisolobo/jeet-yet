@@ -1,6 +1,6 @@
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: ***REMOVED-FIREBASE-WEB-API-KEY***
+    secret: NEXT_PUBLIC_FIREBASE_API_KEY
     availability:
       - BUILD
       - RUNTIME
