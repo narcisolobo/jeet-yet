@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +11,8 @@ import {
 } from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
-import { Mail, Lock } from "lucide-react";
-import { Fragment } from "react";
+import { Lock, Mail } from "lucide-react";
+import { Fragment, type SyntheticEvent, useState } from "react";
 
 type SignInFieldErrors = Partial<Record<"email" | "password", string[]>>;
 
@@ -23,7 +22,7 @@ function SignInForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setFormError(null);
@@ -52,13 +51,6 @@ function SignInForm() {
           error.code === "auth/wrong-password" ||
           error.code === "auth/user-not-found"
         ) {
-          // These all mean "the credentials didn't match" — kept under one
-          // message regardless of which the SDK returns, since which
-          // specific code comes back depends on environment: the Auth
-          // Emulator still returns the legacy wrong-password/user-not-found
-          // codes, while production Firebase Auth unifies both into
-          // invalid-credential specifically so a client can't distinguish
-          // (and thus can't leak) which one was wrong.
           setFormError("Incorrect email or password.");
           setSubmitting(false);
           return;
