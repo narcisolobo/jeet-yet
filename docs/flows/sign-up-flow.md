@@ -35,12 +35,13 @@ Uniqueness can't be enforced with a plain read-then-write — two users choosing
 that runs a single Firestore transaction:
 
 1. Reject up front if `handle` isn't 3-30 characters of lowercase letters, digits, and single hyphens (no leading/trailing/doubled hyphens).
-2. Read `handles/{handle}` and `profiles/{uid}` together.
-3. If the profile doesn't exist → `failed-precondition` (defensive; shouldn't happen in practice since Detect New User always creates it first).
-4. If `handles/{handle}` exists → throw `already-exists` back to the client (seen there as `functions/already-exists`; the handle picker shows "That handle is already taken — try another" and lets the user edit and retry).
-5. Otherwise → write `handles/{handle} = { uid }` and `profiles/{uid}.handle = handle` atomically.
+2. Reject up front if `handle` exact-matches an entry in the reserved-handles list (`functions/src/reserved-handles.ts` — app/brand identity, existing and likely-future app routes) — thrown as `already-exists`, the same code used for an actually-taken handle, so the client can't distinguish "reserved" from "taken."
+3. Read `handles/{handle}` and `profiles/{uid}` together.
+4. If the profile doesn't exist → `failed-precondition` (defensive; shouldn't happen in practice since Detect New User always creates it first).
+5. If `handles/{handle}` exists → throw `already-exists` back to the client (seen there as `functions/already-exists`; the handle picker shows "That handle is already taken — try another" and lets the user edit and retry).
+6. Otherwise → write `handles/{handle} = { uid }` and `profiles/{uid}.handle = handle` atomically.
 
-Doing the claim server-side (rather than trusting client Firestore rules for it) keeps the uniqueness transaction and format validation in one auditable place — there's no profanity check yet, just the format rule above. The initial `profiles/{uid}` creation above stays a plain client write since it only ever touches the caller's own doc and holds no contested/unique field.
+Doing the claim server-side (rather than trusting client Firestore rules for it) keeps the uniqueness transaction, format validation, and the reserved-handles check in one auditable place — there's no profanity check yet, just those two rules. The initial `profiles/{uid}` creation above stays a plain client write since it only ever touches the caller's own doc and holds no contested/unique field.
 
 ## Redirect
 
@@ -48,7 +49,7 @@ Once `claimHandle` resolves successfully, `/onboarding` routes to `/dashboard`.
 
 ## Server-Side Session
 
-Firebase Auth state otherwise lives only in the browser (the client SDK's `onAuthStateChanged`), which the Next.js server has no way to read — no cookie, no header. That blocks any server-side auth check (redirecting unauthenticated requests before a page even renders) and any server-side Firestore read scoped to the signed-in user (needed once collections are fetched server-side, per [collections.md](collections.md)). A session-cookie bridge closes that gap:
+Firebase Auth state otherwise lives only in the browser (the client SDK's `onAuthStateChanged`), which the Next.js server has no way to read — no cookie, no header. That blocks any server-side auth check (redirecting unauthenticated requests before a page even renders) and any server-side Firestore read scoped to the signed-in user (needed once collections are fetched server-side, per [specs/identity.md](../specs/identity.md)). A session-cookie bridge closes that gap:
 
 - After `signInWithEmail`, `signUpWithEmail`, or `signInWithGoogle` resolves client-side, `syncSessionCookie` (`src/lib/firebase/session-client.ts`) takes a fresh ID token (`user.getIdToken()`) and `POST`s it to `/api/session` (`src/app/api/session/route.ts`), which verifies the token, checks it's from a recent sign-in (`auth_time` within 5 minutes), and mints an `httpOnly` session cookie (`__session`) via `firebase-admin`'s `createSessionCookie` (`src/lib/firebase/admin.ts`). `signOutUser` clears it via `DELETE /api/session`.
 - `src/proxy.ts` — this Next.js version's renamed `middleware.ts` (see `AGENTS.md`; the Edge runtime is no longer supported, so `proxy.ts` always runs on Node, letting `firebase-admin` verify the cookie directly instead of only checking for its presence) — guards `/dashboard`, `/profile`, and `/onboarding`, redirecting to `/auth/sign-in` server-side before any page code runs if the cookie is missing or fails `verifySessionCookie`. This is what actually stops a logged-out visitor from ever seeing a flash of protected content; the client-side redirect effects on those pages (Onboarding Route, above) stay in place as defense-in-depth for a cookie that's momentarily stale relative to fresh client state.
