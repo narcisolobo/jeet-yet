@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { RESERVED_HANDLES } from "./reserved-handles";
 
 initializeApp();
 
@@ -34,6 +35,10 @@ export const claimHandle = onCall(async (request) => {
       "invalid-argument",
       "Handle must be 3-30 characters: lowercase letters, numbers, and single hyphens only.",
     );
+  }
+
+  if (RESERVED_HANDLES.has(handle)) {
+    throw new HttpsError("already-exists", "That handle is already taken.");
   }
 
   const db = getFirestore();

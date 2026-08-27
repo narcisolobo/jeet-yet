@@ -148,3 +148,23 @@ test("rejects claiming an already-taken handle", async () => {
   expect(secondResponse.ok).toBe(false);
   expect(secondBody.error?.status).toBe("ALREADY_EXISTS");
 });
+
+test("rejects claiming a reserved handle", async () => {
+  const user = await createEmulatedUser(`e2e-reserved-${Date.now()}@example.com`);
+
+  const response = await fetch(CLAIM_HANDLE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${user.idToken}`,
+    },
+    body: JSON.stringify({ data: { handle: "admin" } }),
+  });
+  const body = await response.json();
+
+  expect(response.ok).toBe(false);
+  expect(body.error?.status).toBe("ALREADY_EXISTS");
+
+  const handleDoc = await getFirestoreDoc("handles/admin");
+  expect(handleDoc).toBeNull();
+});
