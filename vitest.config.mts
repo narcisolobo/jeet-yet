@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Requires a running Firestore emulator — run via `pnpm test:rules`,
+    // not the default `pnpm test`.
+    exclude: ["src/lib/firebase/firestore.rules.test.ts"],
   },
   resolve: {
     alias: {
