@@ -55,6 +55,10 @@ dedicated security rule exists; `firestore.rules`' default catch-all
 is correct since nothing should write here except the Cloud Function (via
 the Admin SDK, which bypasses rules entirely).
 
+## Local Development
+
+`pnpm seed` writes `profiles`/`handles` docs for a handful of test users, with `handle` already claimed — bypassing sign-in and `claimHandle` entirely. See [seed-script.md](seed-script.md).
+
 ## Phasing note
 
 Open, multi-account sign-in (Google + email/password) and these `profiles`/

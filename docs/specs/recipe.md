@@ -72,6 +72,10 @@ Phase 7 adds a per-recipe `comments` subcollection, each comment carrying its ow
 - **OCR:** `tesseract.js` (pure JS/WASM port of Tesseract, runs in-browser or in a Next.js API route), deferred to post-MVP
 - **Images:** Firebase Storage for photos (device storage won't survive sync/reinstall)
 
+## Local Development
+
+`pnpm seed` populates the Firebase Emulator Suite with sample users and recipes matching this data model, so list/detail view work doesn't require creating them by hand via the form each time the emulators restart — see [seed-script.md](seed-script.md).
+
 ## Open Questions
 
 - Algolia local testing (Phase 2): confirm whether a dedicated dev/test Algolia app is set up before the sync extension is installed locally, and how its Admin API key is supplied to the emulated extension (same local-secret pattern as `firebase-admin`/App Hosting secrets — see [sign-up-flow.md](../flows/sign-up-flow.md#server-side-session)) without committing it.

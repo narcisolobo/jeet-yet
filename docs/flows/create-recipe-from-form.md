@@ -55,3 +55,7 @@ Free text was chosen specifically because of Phase 3: URL import scrapes `recipe
 ## Submit
 
 A plain client-side Firestore write (no Cloud Function involved — unlike `claimHandle`, there's no uniqueness contention to arbitrate server-side): creates the `recipes/{recipeId}` doc with `ownerId` set to the current uid, `dateCreated: serverTimestamp()`, and the ingredients array as assembled above. The two Cloud Function triggers described in [specs/recipe.md](../specs/recipe.md) (aggregate-count maintenance, recursive delete) don't fire here — they're scoped to favorite/rating writes and recipe deletion, not creation.
+
+## Local Development
+
+Filling out this form by hand repeatedly to get sample data isn't necessary for local UI work — `pnpm seed` writes a set of sample recipes directly to the emulators instead. See [specs/seed-script.md](../specs/seed-script.md).

@@ -60,5 +60,9 @@ skills-lock.json
 firebase-debug.log
 firestore-debug.log
 
+# Seed script sample photos (sourced ad hoc, not meant to be committed)
+/scripts/seed-assets/*
+!/scripts/seed-assets/.gitkeep
+
 # VS Code
 .vscode
