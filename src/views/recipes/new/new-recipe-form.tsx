@@ -61,6 +61,20 @@ function NewRecipeForm() {
       return;
     }
 
+    const unresolvedCount = Number(
+      formData.get("ingredientsUnresolvedCount") ?? 0,
+    );
+    if (unresolvedCount > 0) {
+      setFieldErrors({
+        ingredients: [
+          `${unresolvedCount} ingredient${unresolvedCount > 1 ? "s" : ""} ` +
+            `need${unresolvedCount === 1 ? "s" : ""} attention before you can save.`,
+        ],
+      });
+      setSubmitting(false);
+      return;
+    }
+
     const photoFile = formData.get("photo");
     const photo =
       photoFile instanceof File && photoFile.size > 0 ? photoFile : null;
