@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useRender } from "@base-ui/react/use-render"
 
 import { cn } from "@/lib/utils"
 
@@ -33,17 +34,27 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="card-title"
-      className={cn(
+function CardTitle({
+  className,
+  render,
+  as = "div",
+  ...props
+}: React.ComponentProps<"div"> & {
+  render?: useRender.RenderProp
+  as?: keyof React.JSX.IntrinsicElements
+}) {
+  return useRender({
+    render,
+    defaultTagName: as,
+    props: {
+      "data-slot": "card-title",
+      className: cn(
         "font-heading text-base leading-normal font-medium group-data-[size=sm]/card:text-sm",
         className
-      )}
-      {...props}
-    />
-  )
+      ),
+      ...props,
+    },
+  })
 }
 
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
