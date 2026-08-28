@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test --project=chromium",
-    "test:rules": "firebase emulators:exec --only firestore \"PATH=$(dirname $(which node)):$PATH pnpm exec vitest run --config vitest.rules.config.mts\"",
+    "test:rules": "firebase emulators:exec --only firestore,storage \"PATH=$(dirname $(which node)):$PATH pnpm exec vitest run --config vitest.rules.config.mts\"",
     "emulators": "firebase emulators:start",
     "functions:build": "npm --prefix functions run build",
     "functions:build:watch": "npm --prefix functions run build:watch"

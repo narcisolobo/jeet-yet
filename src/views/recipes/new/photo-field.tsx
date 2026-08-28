@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, X } from "lucide-react";
 import {
   Attachment,
   AttachmentAction,
@@ -13,12 +11,8 @@ import {
   AttachmentTrigger,
 } from "@/components/ui/attachment";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Spinner } from "@/components/ui/spinner";
-
-// Placeholder for the real Firebase Storage upload — no Storage integration
-// exists yet in this codebase. Swap this timer out once that's wired up,
-// keeping the same "uploading" -> "done" transition below.
-const PLACEHOLDER_UPLOAD_MS = 1200;
+import { Image as ImageIcon, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -26,9 +20,7 @@ function formatFileSize(bytes: number) {
 
 function PhotoField() {
   const [photo, setPhoto] = useState<File | null>(null);
-  const [photoStatus, setPhotoStatus] = useState<"idle" | "uploading" | "done">(
-    "idle",
-  );
+  const photoStatus: "idle" | "done" = photo ? "done" : "idle";
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const photoUrl = useMemo(
@@ -44,24 +36,13 @@ function PhotoField() {
     };
   }, [photoUrl]);
 
-  useEffect(() => {
-    if (photoStatus !== "uploading") return;
-    const timeoutId = setTimeout(
-      () => setPhotoStatus("done"),
-      PLACEHOLDER_UPLOAD_MS,
-    );
-    return () => clearTimeout(timeoutId);
-  }, [photoStatus]);
-
   function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setPhoto(file);
-    setPhotoStatus(file ? "uploading" : "idle");
   }
 
   function handleRemovePhoto() {
     setPhoto(null);
-    setPhotoStatus("idle");
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
     }
@@ -90,9 +71,6 @@ function PhotoField() {
             <img src={photoUrl} alt="" />
           ) : (
             <ImageIcon />
-          )}
-          {photoStatus === "uploading" && (
-            <Spinner className="absolute inset-0 m-auto" />
           )}
         </AttachmentMedia>
         <AttachmentContent>

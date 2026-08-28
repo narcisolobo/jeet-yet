@@ -1,7 +1,15 @@
 import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import type { Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { minutesToISODuration, sumMinutesToISODuration } from "@/lib/utils/duration";
+import {
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes,
+} from "firebase/storage";
+import { db, storage } from "@/lib/firebase";
+import {
+  minutesToISODuration,
+  sumMinutesToISODuration,
+} from "@/lib/utils/duration";
 
 // Our own curated, cooking-focused vocabulary — NOT matched to any parsing
 // library's unit set. `ingredient-parser` (the Python library that parses
@@ -101,14 +109,17 @@ interface NewRecipeData {
   tags?: string[];
 }
 
-// Client-side write (not the Server Action — see
-// src/app/recipes/new/actions.ts, which only validates). Firestore security
-// rules require request.auth.uid == ownerId, so this has to run as the
-// signed-in user via the client SDK rather than through the session-cookie/
-// Admin SDK bridge. Returns the new doc's ID for redirecting to it.
+/**
+ * Client-side write (not the Server Action — see
+ * `src/app/recipes/new/actions.ts`, which only validates). Firestore security
+ * rules require request.auth.uid == ownerId, so this has to run as the
+ * signed-in user via the client SDK rather than through the session-cookie/
+ * Admin SDK bridge. Returns the new doc's ID for redirecting to it.
+ */
 async function createRecipe(
   input: NewRecipeData,
   ownerId: string,
+  photo: File | null,
 ): Promise<string> {
   const ref = doc(collection(db, "recipes"));
 
@@ -131,13 +142,17 @@ async function createRecipe(
   if (prepTime) recipe.prepTime = prepTime;
   const cookTime = minutesToISODuration(input.cookTimeMinutes);
   if (cookTime) recipe.cookTime = cookTime;
-  // Not user-entered — total is just prep + cook, so asking the user to do
-  // that math themselves would be redundant busywork.
   const totalTime = sumMinutesToISODuration(
     input.prepTimeMinutes,
     input.cookTimeMinutes,
   );
   if (totalTime) recipe.totalTime = totalTime;
+
+  if (photo) {
+    const photoRef = storageRef(storage, `recipes/${ownerId}/${ref.id}/photo`);
+    await uploadBytes(photoRef, photo, { contentType: photo.type });
+    recipe.image = await getDownloadURL(photoRef);
+  }
 
   await setDoc(ref, recipe);
   return ref.id;
