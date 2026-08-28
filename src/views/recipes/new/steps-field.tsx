@@ -44,6 +44,11 @@ function StepsField() {
   return (
     <Field className="w-full min-w-sm">
       <FieldLabel>Steps</FieldLabel>
+      <input
+        type="hidden"
+        name="steps"
+        value={JSON.stringify(stepRows.map((row) => row.text))}
+      />
       {stepRows.length > 0 && (
         <ol className="space-y-3">
           {stepRows.map((row, index) => (

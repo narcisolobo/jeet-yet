@@ -8,11 +8,21 @@ this runs server-side in Python rather than a JS regex parser) and the
 
 from fractions import Fraction
 
+from firebase_admin import initialize_app
 from firebase_functions import https_fn
 from ingredient_parser import parse_multiple_ingredients
 from ingredient_parser.dataclasses import CompositeIngredientAmount, ParsedIngredient
 
 from ingredients import build_ingredient_row
+
+# Required even though this function never touches Firestore/Auth data
+# itself — a signed-in caller's ID token is only verified (for
+# CallableRequest.auth) once the default app exists. Without this, a
+# request with no Authorization header works fine (nothing to verify), but
+# one from a signed-in user 401s: "Auth token was rejected" /
+# "The default Firebase app does not exist" — confirmed against the
+# Functions emulator.
+initialize_app()
 
 
 def _as_float(value: Fraction | float | None) -> float | None:

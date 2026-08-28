@@ -1,4 +1,7 @@
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import type { Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { minutesToISODuration } from "@/lib/utils/duration";
 
 // Our own curated, cooking-focused vocabulary — NOT matched to any parsing
 // library's unit set. `ingredient-parser` (the Python library that parses
@@ -13,34 +16,41 @@ import type { Timestamp } from "firebase/firestore";
 // conversion — these are discrete units. Size words ("large"/"medium"
 // "small") aren't units and aren't included here; the parser reports them
 // separately and they're folded into RecipeIngredient.notes.
-type StandardUnit =
+//
+// Exported as a const array (not just a type) so the new-recipe Server
+// Action's Zod schema (src/app/recipes/new/schema.ts) can validate against
+// the same list via z.enum, rather than duplicating it.
+const STANDARD_UNITS = [
   // mass
-  | "gram"
-  | "kilogram"
-  | "ounce"
-  | "pound"
+  "gram",
+  "kilogram",
+  "ounce",
+  "pound",
   // volume
-  | "teaspoon"
-  | "tablespoon"
-  | "fluid-ounce"
-  | "cup"
-  | "pint"
-  | "quart"
-  | "gallon"
-  | "milliliter"
-  | "liter"
-  | "pinch"
-  | "dash"
+  "teaspoon",
+  "tablespoon",
+  "fluid-ounce",
+  "cup",
+  "pint",
+  "quart",
+  "gallon",
+  "milliliter",
+  "liter",
+  "pinch",
+  "dash",
   // count
-  | "piece"
-  | "clove"
-  | "slice"
-  | "can"
-  | "package"
-  | "bunch"
-  | "head"
-  | "sprig"
-  | "stick";
+  "piece",
+  "clove",
+  "slice",
+  "can",
+  "package",
+  "bunch",
+  "head",
+  "sprig",
+  "stick",
+] as const;
+
+type StandardUnit = (typeof STANDARD_UNITS)[number];
 
 interface RecipeIngredient {
   name: string; // e.g. "all-purpose flour"
@@ -77,4 +87,62 @@ interface Recipe {
   thumbsDownCount?: number;
 }
 
-export type { ImportSourceType, Recipe, RecipeIngredient, StandardUnit };
+interface NewRecipeData {
+  title: string;
+  servings?: string;
+  description?: string;
+  ingredients: RecipeIngredient[];
+  steps: string[];
+  prepTimeMinutes?: string;
+  cookTimeMinutes?: string;
+  totalTimeMinutes?: string;
+  category?: string;
+  cuisine?: string;
+  tags?: string[];
+}
+
+// Client-side write (not the Server Action — see
+// src/app/recipes/new/actions.ts, which only validates). Firestore security
+// rules require request.auth.uid == ownerId, so this has to run as the
+// signed-in user via the client SDK rather than through the session-cookie/
+// Admin SDK bridge. Returns the new doc's ID for redirecting to it.
+async function createRecipe(
+  input: NewRecipeData,
+  ownerId: string,
+): Promise<string> {
+  const ref = doc(collection(db, "recipes"));
+
+  const recipe: Record<string, unknown> = {
+    name: input.title,
+    recipeIngredient: input.ingredients,
+    recipeInstructions: input.steps,
+    dateCreated: serverTimestamp(),
+    importSourceType: "manual",
+    ownerId,
+  };
+
+  if (input.description) recipe.description = input.description;
+  if (input.servings) recipe.recipeYield = input.servings;
+  if (input.category) recipe.recipeCategory = input.category;
+  if (input.cuisine) recipe.recipeCuisine = input.cuisine;
+  if (input.tags?.length) recipe.keywords = input.tags;
+
+  const prepTime = minutesToISODuration(input.prepTimeMinutes);
+  if (prepTime) recipe.prepTime = prepTime;
+  const cookTime = minutesToISODuration(input.cookTimeMinutes);
+  if (cookTime) recipe.cookTime = cookTime;
+  const totalTime = minutesToISODuration(input.totalTimeMinutes);
+  if (totalTime) recipe.totalTime = totalTime;
+
+  await setDoc(ref, recipe);
+  return ref.id;
+}
+
+export { createRecipe, STANDARD_UNITS };
+export type {
+  ImportSourceType,
+  NewRecipeData,
+  Recipe,
+  RecipeIngredient,
+  StandardUnit,
+};

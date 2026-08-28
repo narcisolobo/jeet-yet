@@ -1,2 +1,3 @@
+firebase-admin
 firebase-functions
 ingredient-parser-nlp

@@ -207,6 +207,11 @@ function IngredientsField() {
   return (
     <Field className="w-full min-w-sm">
       <FieldLabel htmlFor="ingredients-draft">Ingredients</FieldLabel>
+      <input
+        type="hidden"
+        name="ingredients"
+        value={JSON.stringify(ingredientRows.map((row) => row.ingredient))}
+      />
       <Textarea
         id="ingredients-draft"
         placeholder={"Paste ingredients, one per line, e.g.\n2 cups flour\n1 tsp salt"}
