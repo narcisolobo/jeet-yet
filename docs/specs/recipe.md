@@ -27,7 +27,7 @@ Core recipe fields are aligned to [schema.org/Recipe](https://schema.org/Recipe)
 | Source/author | `author`                        | Person or Organization               |
 | Date added    | `datePublished` / `dateCreated` |                                      |
 | Diet info     | `suitableForDiet`               | future                               |
-| Nutrition     | `nutrition`                     | future — NutritionInformation object |
+| Nutrition     | `nutrition`                     | future — NutritionInformation object; see [prd.md](../prd.md)'s Phase 6 — REMINDER: needs a visible "estimates only" disclaimer wherever shown |
 | Import source URL | `isBasedOn`                 | present only for URL imports; gives attribution and a link back to the source — see `importSourceType` below for the app-specific field covering all three import methods |
 
 App-specific fields with no schema.org equivalent, and not publishable recipe content: personal notes/tweaks and cook history. Since recipe documents are always publicly readable (see below) and Firestore security rules are document-level, not field-level, these live in a `recipes/{recipeId}/private/{ownerId}` subcollection rather than as fields on the recipe doc itself — the doc ID is the owner's uid so `request.auth.uid == ownerId` is a direct rule check with no lookup, and `ownerId` is also stored as a field so the subcollection is queryable via a collection-group query (e.g. a future "all my notes" view).

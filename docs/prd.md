@@ -21,7 +21,7 @@ Existing recipe apps are bad at getting recipes _into_ the app — scraping is u
 
 - No shared/household accounts — each user owns an independent collection; there's no multi-editor access to the same recipes (see Phase 7 for cross-user features like following)
 - No monetization, ads, or third-party integrations beyond recipe import sources
-- Not trying to be a meal-planning or nutrition-tracking app (may revisit later)
+- Not trying to be a meal-planning or nutrition-tracking app (see Phase 6 for calorie/nutrition estimates as a possible later revisit)
 
 ## User
 
@@ -65,6 +65,7 @@ Open to any user from Phase 1 onward — anyone can sign in (Google or email/pas
 - Cook history (dates made, times cooked)
 - Shopping list generation (merge ingredients across recipes)
 - Search/filter by cook time, rating
+- Calorie/nutrition estimates from ingredients — REMINDER: needs a visible "estimates only, not a substitute for professional dietary/medical advice" disclaimer wherever shown, given the inherent imprecision of ingredient-based calculation
 
 ### Community (Phase 7)
 
@@ -95,7 +96,7 @@ Photo upload to Firebase Storage, notes/tweaks field, offline read caching valid
 Port the app to SwiftUI, reusing the Firebase backend and data model designed in Phases 1–4. Ports core + organization features first; import can lag if scraping logic doesn't translate directly.
 
 **Phase 6: Post-MVP**
-Unit conversion, ingredient scaling, cook mode, cook history, shopping list generation, OCR photo import — built for whichever platform(s) make sense at that point. Ingredient records are already structured (see [specs/recipe.md](specs/recipe.md)), so conversion/scaling here is application logic on existing data, not a schema change.
+Unit conversion, ingredient scaling, cook mode, cook history, shopping list generation, OCR photo import, calorie/nutrition estimates — built for whichever platform(s) make sense at that point. Ingredient records are already structured (see [specs/recipe.md](specs/recipe.md)), so conversion/scaling here is application logic on existing data, not a schema change; nutrition estimation additionally needs an external ingredient-nutrition data source, and — REMINDER — a visible "estimates only" disclaimer given how imprecise ingredient-based calculation is.
 
 **Phase 7: Community (social layer)**
 Builds on the `ownerId` field and security rules already in place since Phase 1, plus the `profiles`/`handles` collections already backing sign-in since Phase 1. Public discovery, favoriting, and ratings all shipped earlier than originally planned (Phase 2) once the app moved to public-by-default, so what's left here is smaller than the original plan: following and comments — a new `comments` subcollection, following UI, and moderation for both.
