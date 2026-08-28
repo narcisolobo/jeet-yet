@@ -12,6 +12,11 @@
 process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
+// This script only ever talks to the emulators above — there's no real
+// credential to find. Without this, the Admin SDK's default-credential
+// lookup falls through to probing the GCE metadata server, which fails
+// (we're not on GCP) and logs a MetadataLookupWarning on the first call.
+process.env.METADATA_SERVER_DETECTION = "none";
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
