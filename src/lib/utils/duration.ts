@@ -7,4 +7,12 @@ function minutesToISODuration(minutes: string | undefined): string | undefined {
   return `PT${value}M`;
 }
 
-export { minutesToISODuration };
+function sumMinutesToISODuration(
+  a: string | undefined,
+  b: string | undefined,
+): string | undefined {
+  const total = (Number(a) || 0) + (Number(b) || 0);
+  return minutesToISODuration(total > 0 ? String(total) : undefined);
+}
+
+export { minutesToISODuration, sumMinutesToISODuration };

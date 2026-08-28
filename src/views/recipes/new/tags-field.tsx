@@ -29,7 +29,7 @@ function TagsField() {
   }
 
   return (
-    <Field className="w-full min-w-sm">
+    <Field className="w-full">
       <FieldLabel htmlFor="tags-draft">Tags</FieldLabel>
       <input type="hidden" name="tags" value={JSON.stringify(tags)} />
       <Input

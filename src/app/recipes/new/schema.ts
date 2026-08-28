@@ -35,7 +35,6 @@ const newRecipeSchema = z.object({
     .min(1, "Please add at least one step."),
   prepTimeMinutes: optionalWholeNumber,
   cookTimeMinutes: optionalWholeNumber,
-  totalTimeMinutes: optionalWholeNumber,
   category: optionalText,
   cuisine: optionalText,
   tags: z.array(z.string()).optional(),

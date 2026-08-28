@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
 interface StepRow {
@@ -42,8 +43,11 @@ function StepsField() {
   }
 
   return (
-    <Field className="w-full min-w-sm">
-      <FieldLabel>Steps</FieldLabel>
+    <FieldSet className="w-full rounded-lg border border-border p-4">
+      <FieldLegend variant="label">
+        Steps
+        <Badge className="bg-info text-info-foreground">required</Badge>
+      </FieldLegend>
       <input
         type="hidden"
         name="steps"
@@ -108,7 +112,7 @@ function StepsField() {
       >
         Add step
       </Button>
-    </Field>
+    </FieldSet>
   );
 }
 

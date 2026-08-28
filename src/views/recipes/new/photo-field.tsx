@@ -68,7 +68,7 @@ function PhotoField() {
   }
 
   return (
-    <Field className="w-full min-w-sm">
+    <Field className="w-full">
       <FieldLabel htmlFor="photo">Recipe Photo</FieldLabel>
       <input
         ref={photoInputRef}
