@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { minutesToISODuration, sumMinutesToISODuration } from "./duration";
+import {
+  formatISODuration,
+  minutesToISODuration,
+  sumMinutesToISODuration,
+} from "./duration";
 
 describe("minutesToISODuration", () => {
   it("converts a positive whole-minute string to an ISO 8601 duration", () => {
@@ -46,5 +50,27 @@ describe("sumMinutesToISODuration", () => {
 
   it("returns undefined when both are empty strings", () => {
     expect(sumMinutesToISODuration("", "")).toBeUndefined();
+  });
+});
+
+describe("formatISODuration", () => {
+  it("formats a minutes-only duration", () => {
+    expect(formatISODuration("PT15M")).toBe("15 min");
+  });
+
+  it("formats an hours-only duration", () => {
+    expect(formatISODuration("PT1H")).toBe("1 hr");
+  });
+
+  it("formats an hours-and-minutes duration", () => {
+    expect(formatISODuration("PT1H15M")).toBe("1 hr 15 min");
+  });
+
+  it("returns undefined for undefined input", () => {
+    expect(formatISODuration(undefined)).toBeUndefined();
+  });
+
+  it("returns undefined for malformed input", () => {
+    expect(formatISODuration("not-a-duration")).toBeUndefined();
   });
 });

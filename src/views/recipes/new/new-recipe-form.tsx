@@ -80,10 +80,8 @@ function NewRecipeForm() {
       photoFile instanceof File && photoFile.size > 0 ? photoFile : null;
 
     try {
-      await createRecipe(result.data, user.uid, photo);
-      // No recipe detail route exists yet — land on the list instead of a
-      // dead link. Revisit once /recipes/[id] exists.
-      router.push("/recipes");
+      const id = await createRecipe(result.data, user.uid, photo);
+      router.push(`/recipes/${id}`);
     } catch {
       setFormError("Something went wrong. Please try again.");
       setSubmitting(false);

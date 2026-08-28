@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { functions } from "@/lib/firebase";
 import type { RecipeIngredient } from "@/lib/firebase/recipe";
+import { formatIngredientLine } from "@/lib/utils/format-ingredient";
 import { httpsCallable } from "firebase/functions";
 import { Pencil, X } from "lucide-react";
 import { useState } from "react";
@@ -41,18 +42,6 @@ const parseIngredientLines = httpsCallable<
   { lines: string[] },
   ParsedIngredientRow[]
 >(functions, "parse_ingredients");
-
-function formatIngredientLine(ingredient: RecipeIngredient): string {
-  const amountUnit = [
-    ingredient.amount != null ? String(ingredient.amount) : null,
-    ingredient.unit ?? null,
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const line = [amountUnit, ingredient.name].filter(Boolean).join(" ");
-  const extras = [ingredient.preparation, ingredient.notes].filter(Boolean);
-  return extras.length > 0 ? `${line} (${extras.join(", ")})` : line;
-}
 
 function IngredientsField() {
   const [ingredientDraft, setIngredientDraft] = useState("");
