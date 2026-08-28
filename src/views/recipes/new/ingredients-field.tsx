@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 import { httpsCallable } from "firebase/functions";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Pencil, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { FieldError, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { functions } from "@/lib/firebase";
-import type { RecipeIngredient, StandardUnit } from "@/lib/firebase/recipe";
+import {
+  STANDARD_UNITS,
+  type RecipeIngredient,
+  type StandardUnit,
+} from "@/lib/firebase/recipe";
+import { cn } from "@/lib/utils";
 
 interface IngredientRow {
   id: string;
@@ -58,11 +68,11 @@ function FlaggedIngredientRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex items-start gap-2 rounded-md border border-destructive/30 p-2">
-      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+    <div className="border-destructive/30 flex items-start gap-2 rounded-md border p-2">
+      <AlertTriangle className="text-destructive mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 flex-1 space-y-1">
         <Badge variant="destructive">Couldn&apos;t parse this line</Badge>
-        <p className="text-sm break-words">
+        <p className="text-sm wrap-break-word">
           {ingredient.rawOverride ?? ingredient.name}
         </p>
       </div>
@@ -88,36 +98,37 @@ function FlaggedIngredientRow({
 }
 
 function FixIngredientRow({
-  initialText,
+  initialIngredient,
   onSave,
   onCancel,
 }: {
-  initialText: string;
+  initialIngredient: RecipeIngredient;
   onSave: (ingredient: RecipeIngredient) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(initialText);
-  const [amount, setAmount] = useState("");
-  const [unit, setUnit] = useState("");
+  const [name, setName] = useState(
+    initialIngredient.rawOverride ?? initialIngredient.name,
+  );
+  const [amount, setAmount] = useState(
+    initialIngredient.amount != null ? String(initialIngredient.amount) : "",
+  );
+  const [unit, setUnit] = useState(initialIngredient.unit ?? "");
+  const [preparation, setPreparation] = useState(
+    initialIngredient.preparation ?? "",
+  );
 
   function handleSave() {
     if (!name.trim()) return;
     const ingredient: RecipeIngredient = { name: name.trim() };
     if (amount.trim()) ingredient.amount = Number(amount);
     if (unit.trim()) ingredient.unit = unit.trim() as StandardUnit;
+    if (preparation.trim()) ingredient.preparation = preparation.trim();
     onSave(ingredient);
   }
 
   return (
-    <div className="space-y-2 rounded-md border border-border p-2">
+    <div className="border-border space-y-2 rounded-md border p-2">
       <div className="flex gap-2">
-        <Input
-          value={name}
-          aria-label="Ingredient name"
-          placeholder="Name"
-          className="min-w-0 flex-1"
-          onChange={(event) => setName(event.target.value)}
-        />
         <Input
           value={amount}
           type="number"
@@ -126,14 +137,35 @@ function FixIngredientRow({
           className="w-24 shrink-0"
           onChange={(event) => setAmount(event.target.value)}
         />
-        <Input
+        <select
           value={unit}
           aria-label="Unit"
-          placeholder="Unit"
-          className="w-28 shrink-0"
+          className={cn(
+            "border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 h-9 w-28 shrink-0 rounded-md border bg-transparent px-2.5 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-3 md:text-sm",
+          )}
           onChange={(event) => setUnit(event.target.value)}
+        >
+          <option value="">No unit</option>
+          {STANDARD_UNITS.map((standardUnit) => (
+            <option key={standardUnit} value={standardUnit}>
+              {standardUnit}
+            </option>
+          ))}
+        </select>
+        <Input
+          value={name}
+          aria-label="Ingredient name"
+          placeholder="Name"
+          className="min-w-0 flex-1"
+          onChange={(event) => setName(event.target.value)}
         />
       </div>
+      <Input
+        value={preparation}
+        aria-label="Preparation"
+        placeholder="Preparation (optional), e.g. chopped, minced"
+        onChange={(event) => setPreparation(event.target.value)}
+      />
       <div className="flex justify-end gap-2">
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
@@ -205,8 +237,11 @@ function IngredientsField() {
   }
 
   return (
-    <Field className="w-full min-w-sm">
-      <FieldLabel htmlFor="ingredients-draft">Ingredients</FieldLabel>
+    <FieldSet className="border-border w-full rounded-lg border p-4">
+      <FieldLegend variant="label">
+        Ingredients
+        <Badge className="bg-info text-info-foreground">required</Badge>
+      </FieldLegend>
       <input
         type="hidden"
         name="ingredients"
@@ -214,7 +249,10 @@ function IngredientsField() {
       />
       <Textarea
         id="ingredients-draft"
-        placeholder={"Paste ingredients, one per line, e.g.\n2 cups flour\n1 tsp salt"}
+        aria-label="Ingredients"
+        placeholder={
+          "Paste ingredients, one per line, e.g.\n2 cups flour\n1 tsp salt"
+        }
         value={ingredientDraft}
         onChange={(event) => setIngredientDraft(event.target.value)}
       />
@@ -235,8 +273,10 @@ function IngredientsField() {
             <li key={row.id}>
               {fixingRowId === row.id ? (
                 <FixIngredientRow
-                  initialText={row.ingredient.rawOverride ?? row.ingredient.name}
-                  onSave={(ingredient) => handleSaveFixedRow(row.id, ingredient)}
+                  initialIngredient={row.ingredient}
+                  onSave={(ingredient) =>
+                    handleSaveFixedRow(row.id, ingredient)
+                  }
                   onCancel={() => setFixingRowId(null)}
                 />
               ) : row.flagged ? (
@@ -247,26 +287,51 @@ function IngredientsField() {
                   onRemove={() => handleRemoveIngredient(row.id)}
                 />
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="group flex items-center gap-2">
                   <span className="flex-1 text-sm">
                     {formatIngredientLine(row.ingredient)}
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label="Remove ingredient"
-                    onClick={() => handleRemoveIngredient(row.id)}
-                  >
-                    <X />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label="Edit ingredient"
+                          className="cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                          onClick={() => setFixingRowId(row.id)}
+                        >
+                          <Pencil />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>Edit</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label="Remove ingredient"
+                          className="cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                          onClick={() => handleRemoveIngredient(row.id)}
+                        >
+                          <X />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>Remove</TooltipContent>
+                  </Tooltip>
                 </div>
               )}
             </li>
           ))}
         </ul>
       )}
-    </Field>
+    </FieldSet>
   );
 }
 
