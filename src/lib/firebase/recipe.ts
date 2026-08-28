@@ -1,7 +1,7 @@
 import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import type { Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { minutesToISODuration } from "@/lib/utils/duration";
+import { minutesToISODuration, sumMinutesToISODuration } from "@/lib/utils/duration";
 
 // Our own curated, cooking-focused vocabulary — NOT matched to any parsing
 // library's unit set. `ingredient-parser` (the Python library that parses
@@ -47,6 +47,7 @@ const STANDARD_UNITS = [
   "bunch",
   "head",
   "sprig",
+  "stalk",
   "stick",
 ] as const;
 
@@ -95,7 +96,6 @@ interface NewRecipeData {
   steps: string[];
   prepTimeMinutes?: string;
   cookTimeMinutes?: string;
-  totalTimeMinutes?: string;
   category?: string;
   cuisine?: string;
   tags?: string[];
@@ -131,7 +131,12 @@ async function createRecipe(
   if (prepTime) recipe.prepTime = prepTime;
   const cookTime = minutesToISODuration(input.cookTimeMinutes);
   if (cookTime) recipe.cookTime = cookTime;
-  const totalTime = minutesToISODuration(input.totalTimeMinutes);
+  // Not user-entered — total is just prep + cook, so asking the user to do
+  // that math themselves would be redundant busywork.
+  const totalTime = sumMinutesToISODuration(
+    input.prepTimeMinutes,
+    input.cookTimeMinutes,
+  );
   if (totalTime) recipe.totalTime = totalTime;
 
   await setDoc(ref, recipe);

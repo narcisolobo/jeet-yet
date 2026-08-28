@@ -6,14 +6,12 @@ this runs server-side in Python rather than a JS regex parser) and the
 `ingredients` module's pure adapter/flagging logic.
 """
 
-from fractions import Fraction
-
 from firebase_admin import initialize_app
 from firebase_functions import https_fn
 from ingredient_parser import parse_multiple_ingredients
 from ingredient_parser.dataclasses import CompositeIngredientAmount, ParsedIngredient
 
-from ingredients import build_ingredient_row
+from ingredients import build_ingredient_row, strip_bullet_prefix, to_amount_quantity
 
 # Required even though this function never touches Firestore/Auth data
 # itself — a signed-in caller's ID token is only verified (for
@@ -23,10 +21,6 @@ from ingredients import build_ingredient_row
 # "The default Firebase app does not exist" — confirmed against the
 # Functions emulator.
 initialize_app()
-
-
-def _as_float(value: Fraction | float | None) -> float | None:
-    return float(value) if value is not None else None
 
 
 def _to_row(parsed: ParsedIngredient) -> dict:
@@ -48,7 +42,7 @@ def _to_row(parsed: ParsedIngredient) -> dict:
     )
     if parsed.amount and not is_compound:
         first = parsed.amount[0]
-        amount_quantity = _as_float(first.quantity)
+        amount_quantity = to_amount_quantity(first.quantity)
         # `first.unit` is a pint.Unit (str()'s to its canonical long name,
         # e.g. "gram") for recognized units, a plain str (e.g. "clove") for
         # informal count units pint doesn't know, or "" for a bare quantity
@@ -75,7 +69,12 @@ def _to_row(parsed: ParsedIngredient) -> dict:
 
 
 def _parse_lines(lines: list[str]) -> list[dict]:
-    clean_lines = [line for line in lines if isinstance(line, str) and line.strip()]
+    clean_lines = [
+        strip_bullet_prefix(line.strip())
+        for line in lines
+        if isinstance(line, str) and line.strip()
+    ]
+    clean_lines = [line for line in clean_lines if line]
     # volumetric_units_system must be passed explicitly: the library's own
     # default value ("us") isn't one of the values its validation accepts
     # ("us_customary" et al) and raises ValueError otherwise — confirmed

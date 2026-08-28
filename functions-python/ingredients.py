@@ -9,7 +9,24 @@ library's heavy runtime deps (nltk, pint, the trained model). `main.py` is
 the thin glue that extracts these primitives from a real ParsedIngredient.
 """
 
+import re
+from fractions import Fraction
+
 DEFAULT_CONFIDENCE_THRESHOLD = 0.7
+
+# Recipe sites commonly style ingredient checklists with a bullet/checkbox
+# glyph (via CSS ::before content, not a real <input>) that survives
+# copy-paste into a plain textarea as literal Unicode text. Left in place,
+# it glues onto the leading digit ("▢3 large carrots") and breaks quantity
+# detection — confirmed against real pasted content from two different
+# recipe blogs, each using a different glyph (▢ U+25A2, ☐ U+2610).
+_BULLET_PREFIX_RE = re.compile(r"^\s*[☐□▢✓✔•◦‣▪▫○●\-\*]\s*")
+
+
+def strip_bullet_prefix(line: str) -> str:
+    """Strip one leading bullet/checkbox glyph (and surrounding whitespace)
+    from a pasted ingredient line, if present."""
+    return _BULLET_PREFIX_RE.sub("", line, count=1)
 
 # Our own curated, cooking-focused vocabulary — see the comment on
 # StandardUnit in src/lib/firebase/recipe.ts for why this isn't matched to
@@ -43,6 +60,7 @@ _UNIT_MAP = {
     "bunch": "bunch",
     "head": "head",
     "sprig": "sprig",
+    "stalk": "stalk",
     "stick": "stick",
 }
 
@@ -62,6 +80,27 @@ def normalize_unit(raw_unit: str | None) -> str | None:
         return _UNIT_MAP[normalized[:-1]]
 
     return None
+
+
+def to_amount_quantity(value: Fraction | float | str | None) -> float | None:
+    """Coerce `IngredientAmount.quantity` to a float, or None.
+
+    The library's own docstring types this as `Fraction | str` — "a
+    Fraction where possible, otherwise a string" — so a plain `float(value)`
+    crashes the whole Cloud Function invocation whenever quantity comes
+    back as a non-numeric (including empty) string, taking down every
+    other line in the same batch with it. Confirmed in production: a real
+    ingredient line produced quantity="", raising
+    `ValueError: could not convert string to float: ''`.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return float(value)
 
 
 def build_ingredient_row(

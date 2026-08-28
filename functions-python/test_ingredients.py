@@ -1,4 +1,61 @@
-from ingredients import build_ingredient_row, normalize_unit
+from fractions import Fraction
+
+from ingredients import (
+    build_ingredient_row,
+    normalize_unit,
+    strip_bullet_prefix,
+    to_amount_quantity,
+)
+
+
+class TestStripBulletPrefix:
+    def test_strips_rounded_square_checkbox(self):
+        # The exact glyph (U+25A2) a real recipe blog's pasted checklist
+        # produced — glued directly onto the leading digit with no space,
+        # which broke quantity detection ("▢3 large carrots").
+        assert strip_bullet_prefix("▢3 large carrots") == "3 large carrots"
+
+    def test_strips_ballot_box_checkbox(self):
+        # A different glyph (U+2610) from another site's checklist styling.
+        assert strip_bullet_prefix("☐2 cups flour") == "2 cups flour"
+
+    def test_strips_bullet_with_following_space(self):
+        assert strip_bullet_prefix("• 2 cups flour") == "2 cups flour"
+
+    def test_strips_markdown_dash_bullet(self):
+        assert strip_bullet_prefix("- 2 cups flour") == "2 cups flour"
+
+    def test_strips_leading_whitespace_before_bullet(self):
+        assert strip_bullet_prefix("  ▢2 cups flour") == "2 cups flour"
+
+    def test_leaves_line_without_a_bullet_unchanged(self):
+        assert strip_bullet_prefix("2 cups flour") == "2 cups flour"
+
+    def test_does_not_strip_a_hyphen_inside_the_line(self):
+        assert strip_bullet_prefix("all-purpose flour") == "all-purpose flour"
+
+
+class TestToAmountQuantity:
+    def test_converts_a_fraction(self):
+        assert to_amount_quantity(Fraction(1, 2)) == 0.5
+
+    def test_converts_a_float(self):
+        assert to_amount_quantity(3.5) == 3.5
+
+    def test_returns_none_for_none(self):
+        assert to_amount_quantity(None) is None
+
+    def test_converts_a_numeric_string(self):
+        assert to_amount_quantity("2.5") == 2.5
+
+    def test_returns_none_for_an_empty_string_without_raising(self):
+        # Regression: the library types quantity as `Fraction | str` and a
+        # real ingredient line produced "" here, which crashed the whole
+        # Cloud Function invocation via float("").
+        assert to_amount_quantity("") is None
+
+    def test_returns_none_for_a_non_numeric_string_without_raising(self):
+        assert to_amount_quantity("a few") is None
 
 
 class TestNormalizeUnit:
@@ -13,6 +70,13 @@ class TestNormalizeUnit:
 
     def test_maps_count_unit_passthrough(self):
         assert normalize_unit("clove") == "clove"
+
+    def test_maps_stalk(self):
+        # Regression: "2 stalks celery" produced unit="stalk", missing from
+        # STANDARD_UNITS entirely — Zod rejected the whole recipe submission
+        # on save with an unreadable raw enum-mismatch error.
+        assert normalize_unit("stalk") == "stalk"
+        assert normalize_unit("stalks") == "stalk"
 
     def test_is_case_insensitive(self):
         assert normalize_unit("GRAM") == "gram"
