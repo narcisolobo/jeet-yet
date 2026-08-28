@@ -1,21 +1,46 @@
 import type { Timestamp } from "firebase/firestore";
 
-// Not exhaustive — extend as new ingredients need units the paste-and-parse
-// flow doesn't already cover. Grouped by conversion family per
-// specs/recipe.md (mass⇄mass via grams, volume⇄volume via ml; no
-// cross-family conversion yet).
+// Our own curated, cooking-focused vocabulary — NOT matched to any parsing
+// library's unit set. `ingredient-parser` (the Python library that parses
+// ingredient lines — see specs/recipe.md's Open Questions) is built on
+// `pint`, an open-ended physical-units registry with no finite list to
+// match; instead, the Cloud Function that calls it normalizes whatever unit
+// it detects down to this list, and treats anything that doesn't map
+// cleanly as low-confidence (flagged for the user, see
+// flows/create-recipe-from-form.md) rather than coercing it. Grouped by
+// conversion family per specs/recipe.md (mass⇄mass via grams, volume⇄volume
+// via ml; no cross-family conversion yet). The "count" group has no
+// conversion — these are discrete units. Size words ("large"/"medium"
+// "small") aren't units and aren't included here; the parser reports them
+// separately and they're folded into RecipeIngredient.notes.
 type StandardUnit =
+  // mass
   | "gram"
   | "kilogram"
   | "ounce"
   | "pound"
-  | "milliliter"
-  | "liter"
+  // volume
   | "teaspoon"
   | "tablespoon"
-  | "cup"
   | "fluid-ounce"
-  | "piece";
+  | "cup"
+  | "pint"
+  | "quart"
+  | "gallon"
+  | "milliliter"
+  | "liter"
+  | "pinch"
+  | "dash"
+  // count
+  | "piece"
+  | "clove"
+  | "slice"
+  | "can"
+  | "package"
+  | "bunch"
+  | "head"
+  | "sprig"
+  | "stick";
 
 interface RecipeIngredient {
   name: string; // e.g. "all-purpose flour"

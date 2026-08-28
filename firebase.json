@@ -19,6 +19,11 @@
       "source": "functions",
       "codebase": "default",
       "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    },
+    {
+      "source": "functions-python",
+      "codebase": "ingredients",
+      "runtime": "python313"
     }
   ],
   "emulators": {
