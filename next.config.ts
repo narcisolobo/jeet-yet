@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        pathname: "/v0/b/jeet-yet.firebasestorage.app/o/**",
+      },
     ],
   },
 };
