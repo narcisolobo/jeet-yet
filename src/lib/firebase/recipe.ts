@@ -1,4 +1,11 @@
-import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteField,
+  doc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import type { Timestamp } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -25,8 +32,8 @@ import {
 // "small") aren't units and aren't included here; the parser reports them
 // separately and they're folded into RecipeIngredient.notes.
 //
-// Exported as a const array (not just a type) so the new-recipe Server
-// Action's Zod schema (src/app/recipes/new/schema.ts) can validate against
+// Exported as a const array (not just a type) so the recipe form's Server
+// Action Zod schema (src/app/recipes/schema.ts) can validate against
 // the same list via z.enum, rather than duplicating it.
 const STANDARD_UNITS = [
   // mass
@@ -96,7 +103,7 @@ interface Recipe {
   thumbsDownCount?: number;
 }
 
-interface NewRecipeData {
+interface RecipeFormData {
   title: string;
   servings?: string;
   description?: string;
@@ -111,13 +118,13 @@ interface NewRecipeData {
 
 /**
  * Client-side write (not the Server Action — see
- * `src/app/recipes/new/actions.ts`, which only validates). Firestore security
+ * `src/app/recipes/actions.ts`, which only validates). Firestore security
  * rules require request.auth.uid == ownerId, so this has to run as the
  * signed-in user via the client SDK rather than through the session-cookie/
  * Admin SDK bridge. Returns the new doc's ID for redirecting to it.
  */
 async function createRecipe(
-  input: NewRecipeData,
+  input: RecipeFormData,
   ownerId: string,
   photo: File | null,
 ): Promise<string> {
@@ -158,11 +165,56 @@ async function createRecipe(
   return ref.id;
 }
 
-export { createRecipe, STANDARD_UNITS };
+/**
+ * Client-side write, same rationale as `createRecipe`. Unlike create,
+ * optional fields that became empty must be explicitly cleared with
+ * `deleteField()` rather than just omitted, or stale data would linger from
+ * before the edit. Photo storage/Firestore `image` are only touched when a
+ * new file is provided — the existing photo is left as-is otherwise.
+ */
+async function updateRecipe(
+  recipeId: string,
+  input: RecipeFormData,
+  ownerId: string,
+  photo: File | null,
+): Promise<void> {
+  const ref = doc(db, "recipes", recipeId);
+
+  const recipe: Record<string, unknown> = {
+    name: input.title,
+    recipeIngredient: input.ingredients,
+    recipeInstructions: input.steps,
+    description: input.description || deleteField(),
+    recipeYield: input.servings || deleteField(),
+    recipeCategory: input.category || deleteField(),
+    recipeCuisine: input.cuisine || deleteField(),
+    keywords: input.tags?.length ? input.tags : deleteField(),
+  };
+
+  const prepTime = minutesToISODuration(input.prepTimeMinutes);
+  recipe.prepTime = prepTime || deleteField();
+  const cookTime = minutesToISODuration(input.cookTimeMinutes);
+  recipe.cookTime = cookTime || deleteField();
+  const totalTime = sumMinutesToISODuration(
+    input.prepTimeMinutes,
+    input.cookTimeMinutes,
+  );
+  recipe.totalTime = totalTime || deleteField();
+
+  if (photo) {
+    const photoRef = storageRef(storage, `recipes/${ownerId}/${recipeId}/photo`);
+    await uploadBytes(photoRef, photo, { contentType: photo.type });
+    recipe.image = await getDownloadURL(photoRef);
+  }
+
+  await updateDoc(ref, recipe);
+}
+
+export { createRecipe, STANDARD_UNITS, updateRecipe };
 export type {
   ImportSourceType,
-  NewRecipeData,
   Recipe,
+  RecipeFormData,
   RecipeIngredient,
   StandardUnit,
 };

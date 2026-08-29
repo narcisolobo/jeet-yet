@@ -6,9 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-function TagsField() {
+interface TagsFieldProps {
+  initialTags?: string[];
+}
+
+function TagsField({ initialTags = [] }: TagsFieldProps) {
   const [tagDraft, setTagDraft] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(initialTags);
 
   function handleAddTag() {
     const value = tagDraft.trim();

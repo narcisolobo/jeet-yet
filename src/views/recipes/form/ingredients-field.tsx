@@ -43,9 +43,19 @@ const parseIngredientLines = httpsCallable<
   ParsedIngredientRow[]
 >(functions, "parse_ingredients");
 
-function IngredientsField() {
+interface IngredientsFieldProps {
+  initialIngredients?: RecipeIngredient[];
+}
+
+function IngredientsField({ initialIngredients = [] }: IngredientsFieldProps) {
   const [ingredientDraft, setIngredientDraft] = useState("");
-  const [ingredientRows, setIngredientRows] = useState<IngredientRow[]>([]);
+  const [ingredientRows, setIngredientRows] = useState<IngredientRow[]>(() =>
+    initialIngredients.map((ingredient) => ({
+      id: crypto.randomUUID(),
+      flagged: false,
+      ingredient,
+    })),
+  );
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [fixingRowId, setFixingRowId] = useState<string | null>(null);

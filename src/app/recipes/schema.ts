@@ -23,7 +23,7 @@ const recipeIngredientSchema = z.object({
   rawOverride: z.string().optional(),
 });
 
-const newRecipeSchema = z.object({
+const recipeSchema = z.object({
   title: z.string().trim().min(1, "Please enter a recipe title."),
   servings: optionalWholeNumber,
   description: optionalText,
@@ -40,7 +40,7 @@ const newRecipeSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-type NewRecipeInput = z.infer<typeof newRecipeSchema>;
-type NewRecipeFieldErrors = Partial<Record<keyof NewRecipeInput, string[]>>;
+type RecipeFormInput = z.infer<typeof recipeSchema>;
+type RecipeFormFieldErrors = Partial<Record<keyof RecipeFormInput, string[]>>;
 
-export { newRecipeSchema, type NewRecipeInput, type NewRecipeFieldErrors };
+export { recipeSchema, type RecipeFormInput, type RecipeFormFieldErrors };

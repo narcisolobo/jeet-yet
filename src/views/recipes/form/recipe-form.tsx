@@ -1,7 +1,7 @@
 "use client";
 
-import { validateNewRecipe } from "@/app/recipes/new/actions";
-import type { NewRecipeFieldErrors } from "@/app/recipes/new/schema";
+import { validateRecipe } from "@/app/recipes/actions";
+import type { RecipeFormFieldErrors } from "@/app/recipes/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
-import { createRecipe } from "@/lib/firebase/recipe";
+import { createRecipe, updateRecipe } from "@/lib/firebase/recipe";
+import type { RecipeIngredient } from "@/lib/firebase/recipe";
 import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 import IngredientsField from "./ingredients-field";
@@ -23,17 +24,40 @@ import PhotoField from "./photo-field";
 import StepsField from "./steps-field";
 import TagsField from "./tags-field";
 
-function NewRecipeForm() {
+interface RecipeFormInitialValues {
+  title: string;
+  servings?: string;
+  description?: string;
+  ingredients: RecipeIngredient[];
+  steps: string[];
+  prepTimeMinutes?: string;
+  cookTimeMinutes?: string;
+  category?: string;
+  cuisine?: string;
+  tags?: string[];
+  photoUrl?: string;
+}
+
+type RecipeFormProps =
+  | { mode: "create" }
+  | { mode: "edit"; recipeId: string; initialValues: RecipeFormInitialValues };
+
+function RecipeForm(props: RecipeFormProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const [fieldErrors, setFieldErrors] = useState<NewRecipeFieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<RecipeFormFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const initialValues = props.mode === "edit" ? props.initialValues : undefined;
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user) {
-      setFormError("Please sign in to create a recipe.");
+      setFormError(
+        props.mode === "edit"
+          ? "Please sign in to edit this recipe."
+          : "Please sign in to create a recipe.",
+      );
       return;
     }
 
@@ -42,7 +66,7 @@ function NewRecipeForm() {
     setFieldErrors({});
 
     const formData = new FormData(event.currentTarget);
-    const result = await validateNewRecipe({
+    const result = await validateRecipe({
       title: String(formData.get("title") ?? ""),
       servings: String(formData.get("servings") ?? ""),
       description: String(formData.get("description") ?? ""),
@@ -80,8 +104,13 @@ function NewRecipeForm() {
       photoFile instanceof File && photoFile.size > 0 ? photoFile : null;
 
     try {
-      const id = await createRecipe(result.data, user.uid, photo);
-      router.push(`/recipes/${id}`);
+      if (props.mode === "edit") {
+        await updateRecipe(props.recipeId, result.data, user.uid, photo);
+        router.push(`/recipes/${props.recipeId}`);
+      } else {
+        const id = await createRecipe(result.data, user.uid, photo);
+        router.push(`/recipes/${id}`);
+      }
     } catch {
       setFormError("Something went wrong. Please try again.");
       setSubmitting(false);
@@ -109,6 +138,7 @@ function NewRecipeForm() {
                   id="title"
                   name="title"
                   type="text"
+                  defaultValue={initialValues?.title}
                   aria-required
                   aria-invalid={Boolean(fieldErrors.title?.length)}
                   disabled={submitting}
@@ -125,6 +155,7 @@ function NewRecipeForm() {
                   name="servings"
                   type="number"
                   min="1"
+                  defaultValue={initialValues?.servings}
                   disabled={submitting}
                 />
                 <FieldError
@@ -134,21 +165,22 @@ function NewRecipeForm() {
                 />
               </Field>
             </div>
-            <PhotoField />
+            <PhotoField initialPhotoUrl={initialValues?.photoUrl} />
             <Field className="w-full">
               <FieldLabel htmlFor="description">Recipe Description</FieldLabel>
               <Textarea
                 id="description"
                 name="description"
+                defaultValue={initialValues?.description}
                 disabled={submitting}
               />
             </Field>
           </FieldSet>
-          <IngredientsField />
+          <IngredientsField initialIngredients={initialValues?.ingredients} />
           <FieldError
             errors={fieldErrors.ingredients?.map((message) => ({ message }))}
           />
-          <StepsField />
+          <StepsField initialSteps={initialValues?.steps} />
           <FieldError
             errors={fieldErrors.steps?.map((message) => ({ message }))}
           />
@@ -162,6 +194,7 @@ function NewRecipeForm() {
                   name="prepTimeMinutes"
                   type="number"
                   min="0"
+                  defaultValue={initialValues?.prepTimeMinutes}
                   disabled={submitting}
                 />
                 <FieldError
@@ -177,6 +210,7 @@ function NewRecipeForm() {
                   name="cookTimeMinutes"
                   type="number"
                   min="0"
+                  defaultValue={initialValues?.cookTimeMinutes}
                   disabled={submitting}
                 />
                 <FieldError
@@ -197,6 +231,7 @@ function NewRecipeForm() {
                   name="category"
                   type="text"
                   placeholder="e.g. Entree, Dessert, Appetizer"
+                  defaultValue={initialValues?.category}
                   disabled={submitting}
                 />
               </Field>
@@ -207,15 +242,22 @@ function NewRecipeForm() {
                   name="cuisine"
                   type="text"
                   placeholder="e.g. Italian, Mexican, Thai"
+                  defaultValue={initialValues?.cuisine}
                   disabled={submitting}
                 />
               </Field>
             </div>
-            <TagsField />
+            <TagsField initialTags={initialValues?.tags} />
           </FieldSet>
           {formError ? <FieldError>{formError}</FieldError> : null}
           <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Creating..." : "Create Recipe"}
+            {props.mode === "edit"
+              ? submitting
+                ? "Saving..."
+                : "Save Changes"
+              : submitting
+                ? "Creating..."
+                : "Create Recipe"}
           </Button>
         </form>
       </CardContent>
@@ -223,4 +265,5 @@ function NewRecipeForm() {
   );
 }
 
-export default NewRecipeForm;
+export default RecipeForm;
+export type { RecipeFormInitialValues };

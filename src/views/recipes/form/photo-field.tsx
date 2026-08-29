@@ -18,15 +18,21 @@ function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function PhotoField() {
+interface PhotoFieldProps {
+  initialPhotoUrl?: string;
+}
+
+function PhotoField({ initialPhotoUrl }: PhotoFieldProps) {
   const [photo, setPhoto] = useState<File | null>(null);
-  const photoStatus: "idle" | "done" = photo ? "done" : "idle";
+  const photoStatus: "idle" | "done" =
+    photo || initialPhotoUrl ? "done" : "idle";
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const photoUrl = useMemo(
     () => (photo ? URL.createObjectURL(photo) : null),
     [photo],
   );
+  const displayUrl = photoUrl ?? initialPhotoUrl ?? null;
 
   useEffect(() => {
     return () => {
@@ -65,17 +71,17 @@ function PhotoField() {
           aria-label="Upload recipe photo"
           onClick={() => photoInputRef.current?.click()}
         />
-        <AttachmentMedia variant={photo ? "image" : "icon"}>
-          {photo && photoUrl ? (
+        <AttachmentMedia variant={displayUrl ? "image" : "icon"}>
+          {displayUrl ? (
             // eslint-disable-next-line
-            <img src={photoUrl} alt="" />
+            <img src={displayUrl} alt="" />
           ) : (
             <ImageIcon />
           )}
         </AttachmentMedia>
         <AttachmentContent>
           <AttachmentTitle>
-            {photo ? photo.name : "Upload a photo"}
+            {photo ? photo.name : displayUrl ? "Current photo" : "Upload a photo"}
           </AttachmentTitle>
           {photo && (
             <AttachmentDescription>

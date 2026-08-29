@@ -12,8 +12,14 @@ interface StepRow {
   text: string;
 }
 
-function StepsField() {
-  const [stepRows, setStepRows] = useState<StepRow[]>([]);
+interface StepsFieldProps {
+  initialSteps?: string[];
+}
+
+function StepsField({ initialSteps = [] }: StepsFieldProps) {
+  const [stepRows, setStepRows] = useState<StepRow[]>(() =>
+    initialSteps.map((text) => ({ id: crypto.randomUUID(), text })),
+  );
 
   function handleAddStep() {
     setStepRows((rows) => [...rows, { id: crypto.randomUUID(), text: "" }]);

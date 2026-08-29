@@ -15,6 +15,18 @@ function sumMinutesToISODuration(
   return minutesToISODuration(total > 0 ? String(total) : undefined);
 }
 
+function isoDurationToMinutes(duration: string | undefined): string | undefined {
+  if (!duration) return undefined;
+
+  const match = /^PT(?:(\d+)H)?(?:(\d+)M)?$/.exec(duration);
+  if (!match) return undefined;
+
+  const hours = Number(match[1] ?? 0);
+  const minutes = Number(match[2] ?? 0);
+  const totalMinutes = hours * 60 + minutes;
+  return totalMinutes > 0 ? String(totalMinutes) : undefined;
+}
+
 function formatISODuration(duration: string | undefined): string | undefined {
   if (!duration) return undefined;
 
@@ -30,4 +42,9 @@ function formatISODuration(duration: string | undefined): string | undefined {
     .join(" ");
 }
 
-export { formatISODuration, minutesToISODuration, sumMinutesToISODuration };
+export {
+  formatISODuration,
+  isoDurationToMinutes,
+  minutesToISODuration,
+  sumMinutesToISODuration,
+};
